@@ -1,46 +1,62 @@
 package com.exam.ms_auth.controller;
 
-import com.exam.ms_auth.jwt.JwtUtils;
+import com.exam.ms_auth.dto.JwtResponse;
+import com.exam.ms_auth.dto.LoginRequest;
+import com.exam.ms_auth.dto.RegisterRequest;
+import com.exam.ms_auth.dto.UserDTO;
+import com.exam.ms_auth.entity.Rol;
 import com.exam.ms_auth.service.UserService;
-import com.exam.ms_auth.entity.User;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
-
 public class UserController {
 
-    @Autowired
     private final UserService userService;
-    private final JwtUtils jwtUtils;
 
     @PostMapping("/register")
-    public ResponseEntity<Void> register(@RequestBody User u) {
-        userService.registerUsuario(u);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<UserDTO> register(@RequestBody RegisterRequest request) {
+        UserDTO newUser = userService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestParam String email,
-                                        @RequestParam String password) {
-        String token = userService.login(email, password);
-        return ResponseEntity.ok(token);
+    public ResponseEntity<JwtResponse> login(@RequestBody LoginRequest request) {
+        String token = userService.login(request.getEmail(), request.getPassword());
+        return ResponseEntity.ok(new JwtResponse(token));
     }
 
-    @PostMapping("/login2")
-    public ResponseEntity<String> login(@RequestBody LoginDTO req) {
-        String token = userService.login(req.getEmail(), req.getPassword());
-        return ResponseEntity.ok(token);
-    }
-
+    // 3. Validar token y obtener datos de usuario
     @GetMapping("/validate")
-    public ResponseEntity<String> validate(@RequestHeader("Authorization") String h) {
-        String token = h.substring(7);
-        boolean valid = jwtUtils.isTokenValid(token, jwtUtils.parseClaims(token).getSubject());
-        return valid ? ResponseEntity.ok("valid") : ResponseEntity.status(401).body("invalid");
+    public ResponseEntity<UserDTO> validateToken(
+            @RequestHeader("Authorization") String bearerToken) {
+        UserDTO user = userService.validate(bearerToken.substring(7));
+        return ResponseEntity.ok(user);
+    }
+
+    @GetMapping("/test/superadmin")
+    @PreAuthorize("hasRole('SUPERADMIN')")
+    public List<UserDTO> testSuperadmin() {
+        return userService.findByRol(Rol.SUPERADMIN);
+    }
+
+    @GetMapping("/test/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<UserDTO> testAdmin() {
+        return userService.findByRol(Rol.ADMIN);
+    }
+
+    @GetMapping("/test/user")
+    @PreAuthorize("hasRole('USUARIO')")
+    public List<UserDTO> testUser() {
+        return userService.findByRol(Rol.USUARIO);
     }
 }

@@ -9,7 +9,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EnableJpaRepositories(basePackages = "com.exam.ms_auth.repository")
 @EntityScan("com.exam.ms_auth.entity")
 public class MsAuthApplication {
-
 	public static void main(String[] args) {
 		SpringApplication.run(MsAuthApplication.class, args);
 	}

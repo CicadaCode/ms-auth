@@ -1,0 +1,5 @@
+services:
+  vault-server:
+    image: vault:1.13.3
+    ports:
+      - "8200:8200"

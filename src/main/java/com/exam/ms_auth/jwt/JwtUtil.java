@@ -1,30 +1,34 @@
 package com.exam.ms_auth.jwt;
 
+import com.exam.ms_auth.entity.Rol;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 
 import javax.crypto.SecretKey;
 import java.security.Key;
-import java.util.Base64;
 import java.util.Date;
 
 @Component
-public class JwtUtils {
+public class JwtUtil {
 
-    private static final String SECRET_KEY = Base64.getEncoder().encodeToString("yPViSOUkyM9F93MVfbkJRnxS+Gsk0yGpJE9fvZx3zxliUVR59//isD8ReraxBZRtF8kWnebOMHQVIYkqg8akTg==".getBytes());
-    private static final long EXPIRATION_TIME = 30 * 60 * 1000;
+    @Value("${jwt.secret}")
+    private String secret;
+    @Value("${jwt.expiration-ms}")
+    private long expirationMs;
 
     private Key getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
+        System.out.println(secret);
+        byte[] keyBytes = Decoders.BASE64.decode(secret);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(String username, String role) {
+    public String generateToken(String username, Rol role) {
         Date now = new Date();
-        Date expiry = new Date(now.getTime() + EXPIRATION_TIME);
+        Date expiry = new Date(now.getTime() + expirationMs);
 
         return Jwts.builder()
                 .subject(username)
@@ -33,6 +37,15 @@ public class JwtUtils {
                 .claim("role", role)
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    public String extractUsername(String token) {
+        return Jwts.parser()
+                .verifyWith((SecretKey) getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
     }
 
     public Claims parseClaims(String token) {

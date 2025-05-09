@@ -1,40 +1,40 @@
 package com.exam.ms_auth.jwt;
 
+import com.exam.ms_auth.entity.Rol;
 import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class JwtUtilsTest {
+public class JwtUtilTest {
 
-    private final JwtUtils jwt = new JwtUtils();
+    private final JwtUtil jwt = new JwtUtil();
 
     @Test
     void generateAndParseToken() {
-        String username = "Jose";
-        String role = "USER";
+        String username = "John";
 
-        String token = jwt.generateToken(username, role);
+        String token = jwt.generateToken(username, Rol.USUARIO);
 
         Claims claims = jwt.parseClaims(token);
         assertEquals(username, claims.getSubject());
-        assertEquals(role, claims.get("role"));
+        assertEquals(Rol.USUARIO, claims.get("role"));
 
         assertTrue(jwt.isTokenValid(token, username));
     }
 
     @Test
     void tokenInvalid() {
-        String token = jwt.generateToken("Me", "ADMIN");
+        String token = jwt.generateToken("Me", Rol.ADMIN);
 
         assertFalse(jwt.isTokenValid(token, "NotMe"));
     }
 
     @Test
     void tokenRoleClaim() {
-        String token = jwt.generateToken("Ana", "ADMIN");
+        String token = jwt.generateToken("Ana", Rol.ADMIN);
         Claims claims = jwt.parseClaims(token);
 
-        assertEquals("ADMIN", claims.get("role"));
+        assertEquals(Rol.ADMIN, claims.get("role"));
     }
 }

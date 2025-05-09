@@ -1,34 +1,89 @@
 package com.exam.ms_auth.controller;
 
-import com.exam.ms_auth.jwt.JwtUtils;
+import com.exam.ms_auth.dto.LoginRequest;
+import com.exam.ms_auth.dto.RegisterRequest;
+import com.exam.ms_auth.dto.UserDTO;
+import com.exam.ms_auth.jwt.JwtUtil;
 import com.exam.ms_auth.service.UserService;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.Mockito.mock;
+import static com.exam.ms_auth.entity.Rol.USUARIO;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
 class UserControllerTest {
 
-    private UserController controller;
-    private UserService userService;
-    private JwtUtils jwtUtils;
+    @Autowired
+    private MockMvc mockMvc;
 
-    @BeforeEach
-    void setup() {
-        userService = mock(UserService.class);
-        controller = new UserController(userService, jwtUtils);
+    @MockBean
+    private UserService userService;
+
+    @MockBean
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Test
+    void registerReturns201AndUserDto() throws Exception {
+        RegisterRequest request = new RegisterRequest("John", "john@gmail.com", "123456", USUARIO);
+        UserDTO response = new UserDTO(1L, "John", "john@gmail.com", USUARIO);
+
+        Mockito.when(userService.register(Mockito.any(RegisterRequest.class))).thenReturn(response);
+
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                        {
+                          "nombre": "John",
+                          "email": "john@gmail.com",
+                          "password": "123456",
+                          "rol": "USUARIO"
+                        }
+                        """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.nombre").value("John"));
     }
 
     @Test
-    void loginOk() {
-        when(userService.login("user", "pass")).thenReturn("token");
+    void loginReturnsToken() throws Exception {
+        LoginRequest request = new LoginRequest("john@gmail.com", "123456");
 
-        ResponseEntity<?> response = controller.login("Emma@gmail.com", "23498");
+        when(userService.login(eq("john@gmail.com"), eq("123456")))
+                .thenReturn("mocked-jwt-token");
 
-        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("mocked-jwt-token"));
+    }
+
+    @Test
+    void validateReturnUsuarioDto() throws Exception {
+        UserDTO userDTO = new UserDTO(1L, "John", "John@gmail.com", USUARIO);
+
+        when(userService.validate("token123")).thenReturn(userDTO);
+
+        mockMvc.perform(get("/auth/validate")
+                        .header("Authorization", "Bearer token123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nombre").value("John"))
+                .andExpect(jsonPath("$.rol").value("USUARIO"));
     }
 }
