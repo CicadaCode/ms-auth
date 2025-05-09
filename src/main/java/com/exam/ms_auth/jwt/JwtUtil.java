@@ -21,8 +21,7 @@ public class JwtUtil {
     private long expirationMs;
 
     private Key getSigningKey() {
-        System.out.println(secret);
-        byte[] keyBytes = Decoders.BASE64.decode(secret);
+            byte[] keyBytes = Decoders.BASE64.decode(secret);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 

@@ -41,7 +41,6 @@ class UserControllerTest {
 
     @Test
     void registerReturns201AndUserDto() throws Exception {
-        RegisterRequest request = new RegisterRequest("John", "john@gmail.com", "123456", USUARIO);
         UserDTO response = new UserDTO(1L, "John", "john@gmail.com", USUARIO);
 
         Mockito.when(userService.register(Mockito.any(RegisterRequest.class))).thenReturn(response);
@@ -64,7 +63,7 @@ class UserControllerTest {
     void loginReturnsToken() throws Exception {
         LoginRequest request = new LoginRequest("john@gmail.com", "123456");
 
-        when(userService.login(eq("john@gmail.com"), eq("123456")))
+        when(userService.login(("john@gmail.com"), ("123456")))
                 .thenReturn("mocked-jwt-token");
 
         mockMvc.perform(post("/auth/login")
