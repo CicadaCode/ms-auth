@@ -34,12 +34,16 @@ public class UserController {
         return ResponseEntity.ok(new JwtResponse(token));
     }
 
-    // 3. Validar token y obtener datos de usuario
     @GetMapping("/validate")
     public ResponseEntity<UserDTO> validateToken(
             @RequestHeader("Authorization") String bearerToken) {
         UserDTO user = userService.validate(bearerToken.substring(7));
         return ResponseEntity.ok(user);
+    }
+
+    @GetMapping("/getUsers")
+    public List<UserDTO> getAllUsers() {
+        return userService.findAll();
     }
 
     @GetMapping("/test/superadmin")

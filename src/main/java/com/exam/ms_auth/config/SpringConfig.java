@@ -19,6 +19,7 @@ public class SpringConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/auth/register", "/auth/login", "/auth/validate","/auth/login2").permitAll()
                         .requestMatchers("/test/superadmin").hasRole("SUPERADMIN")
                         .requestMatchers("/test/admin").hasRole("ADMIN")
@@ -32,7 +33,6 @@ public class SpringConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        // Usamos BCrypt para hashear passwords
         return new BCryptPasswordEncoder();
     }
 }

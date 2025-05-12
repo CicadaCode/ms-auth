@@ -34,6 +34,10 @@ public class UserService {
         return new UserDTO(user);
     }
 
+    public List<UserDTO> findAll() {
+        return userRepository.findAll().stream().map(UserDTO::new).toList();
+    }
+
     public String login(String email, String rawPwd) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
